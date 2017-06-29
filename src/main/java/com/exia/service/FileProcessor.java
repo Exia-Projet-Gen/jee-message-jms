@@ -92,7 +92,8 @@ public class FileProcessor implements MessageListener {
         // Find the number of words in the decoded text
         String decodedText = message.getDecodedText();
         ArrayList<String> decodedWordList = new ArrayList<String>(Arrays.asList(decodedText.split(" ")));
-        Collections.sort(decodedWordList,new Comparator<String>() {
+        ArrayList<String> sortedWordList = new ArrayList<String>(Arrays.asList(decodedText.split(" ")));
+        Collections.sort(sortedWordList,new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
                 String s1 = (String) o1;
@@ -100,10 +101,10 @@ public class FileProcessor implements MessageListener {
                 return s1.toLowerCase().compareTo(s2.toLowerCase());
             }
         });
-        int decodedWordsLength = decodedWordList.size();
+        int decodedWordsLength = sortedWordList.size();
 
         // Find the number of french words in the decoded text
-        int frenchWordsLength = countFrenchWords(decodedWordList, dictionary);
+        int frenchWordsLength = countFrenchWords(sortedWordList, dictionary);
         
         // get the percentage of french words in the text
         double matchPercent = (float) frenchWordsLength / decodedWordsLength;
