@@ -61,23 +61,16 @@ public class FileProcessor implements MessageListener {
             decodingMessage.setFileName(message.getStringProperty("fileName"));                  
 
             JAXFile checkedMessage = checkMessage(decodingMessage);
-            
-            System.out.println("not french");
-            
-            if (checkedMessage.getMatchPercent() > MATCH_PERCENT_NEEDED) {
-                
-                System.out.println("decodedMessage : " + checkedMessage.getDecodedText());
-                System.out.println("file name : " + checkedMessage.getFileName());
-                System.out.println("key : " + checkedMessage.getKey());
-                System.out.println("mail address : " + checkedMessage.getMailAddress());
-                System.out.println("french word ratio : " + checkedMessage.getMatchPercent());
-                
+                        
+            if (checkedMessage.getMatchPercent() > MATCH_PERCENT_NEEDED) {               
                 saveFileInfo(checkedMessage);
             }
             
             if (checkedMessage.getMailAddress() != null) {
                 // if mail found => call .NET WS
-                System.out.println("sending mail to .net platform");
+                checkedMessage.setDecodedText(decodingMessage.getDecodedText());
+                notifyPlatform(checkedMessage);
+                System.out.println("sending notification to .net platform");
             }
             
         }catch(JMSException ex) {
@@ -142,9 +135,15 @@ public class FileProcessor implements MessageListener {
         }
         
         //Design pattern implicite
-        for (String e: emails) {
-            result = result + ", " + e;
+        for (int i=0; i<emails.size(); i++) {
+            if (i < 1) {
+                result += emails.get(i);
+                result += " ";
+            } else if(i == emails.size()-1) {
+                result += emails.get(i);
+            }
         }
+        
         return result;
     }
     
@@ -166,8 +165,8 @@ public class FileProcessor implements MessageListener {
         
         int wordsCount = 0;
         String prevWord = "";
-        
-        
+               
+        // Design pattern implicite (iterator)
         for (String word : decodedWordsList) {
             if (prevWord.equals(word.toLowerCase()) || dictionary.contains(word.toLowerCase())) {
                 wordsCount++;
@@ -218,6 +217,14 @@ public class FileProcessor implements MessageListener {
 
         Response response = resource.request(MediaType.APPLICATION_JSON)
                 .post(Entity.json(checkedFile));
+    }
+    
+    private void notifyPlatform(JAXFile checkedMessage) {
+        Client client = ClientBuilder.newClient();
+        WebTarget resource = client.target("http://10.162.129.122:8090/Stoper/api/BruteForce");
+
+        Response response = resource.request(MediaType.APPLICATION_JSON)
+                .post(Entity.json(checkedMessage));
         
         System.out.println(response);
     }
